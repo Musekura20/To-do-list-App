@@ -127,8 +127,13 @@ const taskInput = document.querySelector("#task-input");
 const taskList = document.querySelector("#task-list");
 const formError = document.querySelector("#form-error");
 const emptyState = document.querySelector("#empty-state");
+const taskCounter = document.querySelector("#task-counter");
+const progressBar = document.querySelector("#progress-bar");
+const progressTrack = document.querySelector("#progress-track");
+const progressLabel = document.querySelector("#progress-label");
 
 let tasks = [];
+let currentFilter = "all";
 
 function addTask(text) {
   const trimmedText = text.trim();
@@ -165,15 +170,54 @@ function clearError() {
   formError.classList.add("hidden");
 }
 
+function updateProgress() {
+  const totalTasks = tasks.length;
+
+  const completedTasks = tasks.filter(function (task) {
+    return task.completed;
+  }).length;
+
+  let percentage = 0;
+
+  if (totalTasks > 0) {
+    percentage = Math.round((completedTasks / totalTasks) * 100);
+  }
+
+  progressBar.style.width = percentage + "%";
+  progressTrack.setAttribute("aria-valuenow", percentage);
+  progressLabel.textContent = percentage + "% completed";
+
+  const remainingTasks = totalTasks - completedTasks;
+
+  if (remainingTasks === 1) {
+    taskCounter.textContent = "1 task remaining";
+  } else {
+    taskCounter.textContent = remainingTasks + " tasks remaining";
+  }
+}
+
 /**
  * Displays all tasks in the task list.
  */
+
 function renderTasks() {
   taskList.replaceChildren();
 
   emptyState.classList.toggle("hidden", tasks.length > 0);
 
-  tasks.forEach(function (task) {
+  const filteredTasks = tasks.filter(function (task) {
+    if (currentFilter === "active") {
+      return !task.completed;
+    }
+
+    if (currentFilter === "completed") {
+      return task.completed;
+    }
+
+    return true;
+  });
+
+  filteredTasks.forEach(function (task) {
     const listItem = document.createElement("li");
     const checkbox = document.createElement("input");
     const taskText = document.createElement("span");
@@ -189,10 +233,10 @@ function renderTasks() {
     checkbox.setAttribute("aria-label", `Complete ${task.text}`);
 
     taskText.textContent = task.text;
-    taskText.className = "flex-1 break-words";
 
     if (task.completed) {
-      taskText.className = "flex-1 break-words line-through text-gray-400";
+      taskText.className =
+        "flex-1 break-words line-through text-gray-400";
     } else {
       taskText.className = "flex-1 break-words";
     }
@@ -212,8 +256,21 @@ function renderTasks() {
     listItem.append(checkbox, taskText, editButton, deleteButton);
     taskList.append(listItem);
   });
+
+  updateProgress();
 }
 
+const filterButtons = document.querySelector("#filter-buttons");
+
+filterButtons.addEventListener("click", function (event) {
+  if (!event.target.matches("button[data-filter]")) {
+    return;
+  }
+
+  currentFilter = event.target.dataset.filter;
+
+  renderTasks();
+});
 
 function editTask(taskId, taskText) {
   const task = tasks.find(function (item) {
