@@ -3,7 +3,7 @@ import "./style.css";
 const app = document.querySelector("#app");
 
 app.innerHTML = `
-  <main class="min-h-screen bg-purple-50 px-4 py-8 text-gray-800 sm:py-12">
+  <main id="main-container" class="min-h-screen bg-purple-50 px-4 py-8 text-gray-800 sm:py-12">
     <section class="mx-auto max-w-2xl">
       <header class="mb-8 flex items-center justify-between gap-4">
         <div>
@@ -129,6 +129,8 @@ const formError = document.querySelector("#form-error");
 const emptyState = document.querySelector("#empty-state");
 const taskCounter = document.querySelector("#task-counter");
 const progressBar = document.querySelector("#progress-bar");
+const themeToggle = document.querySelector("#theme-toggle");
+const mainContainer = document.querySelector("#main-container");
 const progressTrack = document.querySelector("#progress-track");
 const progressLabel = document.querySelector("#progress-label");
 
@@ -412,3 +414,19 @@ taskList.addEventListener('keydown', function (event) {
 
 
 renderTasks();
+
+let darkMode = false;
+
+themeToggle.addEventListener("click", function () {
+  darkMode = !darkMode;
+
+  if (darkMode) {
+    mainContainer.classList.replace("bg-purple-50", "bg-gray-900");
+    mainContainer.classList.replace("text-gray-800", "text-gray-100");
+    themeToggle.textContent = "Light mode";
+  } else {
+    mainContainer.classList.replace("bg-gray-900", "bg-purple-50");
+    mainContainer.classList.replace("text-gray-100", "text-gray-800");
+    themeToggle.textContent = "Dark mode";
+  }
+});
