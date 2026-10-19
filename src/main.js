@@ -1,7 +1,6 @@
+import "./style.css";
 
-import './style.css'
-
-const app = document.querySelector('#app')
+const app = document.querySelector("#app");
 
 app.innerHTML = `
   <main class="min-h-screen bg-purple-50 px-4 py-8 text-gray-800 sm:py-12">
@@ -122,85 +121,137 @@ app.innerHTML = `
       </footer>
     </section>
   </main>
-`
-const taskForm = document.querySelector('#task-form')
-const taskInput = document.querySelector('#task-input')
-const taskList = document.querySelector('#task-list')
-const formError = document.querySelector('#form-error')
-const emptyState = document.querySelector('#empty-state')
+`;
+const taskForm = document.querySelector("#task-form");
+const taskInput = document.querySelector("#task-input");
+const taskList = document.querySelector("#task-list");
+const formError = document.querySelector("#form-error");
+const emptyState = document.querySelector("#empty-state");
 
-let tasks = []
+let tasks = [];
 
 function addTask(text) {
-  const trimmedText = text.trim()
+  const trimmedText = text.trim();
 
-  if (trimmedText === '') {
-    showError('Please enter a task.')
-    return
+  if (trimmedText === "") {
+    showError("Please enter a task.");
+    return;
   }
 
   if (trimmedText.length > 100) {
-    showError('Your task must be 100 characters or fewer.')
-    return
+    showError("Your task must be 100 characters or fewer.");
+    return;
   }
 
   const task = {
     id: Date.now(),
     text: trimmedText,
-    completed: false
-  }
+    completed: false,
+  };
 
-  tasks.push(task)
-  taskInput.value = ''
-  clearError()
-  renderTasks()
+  tasks.push(task);
+  taskInput.value = "";
+  clearError();
+  renderTasks();
 }
 
 function showError(message) {
-  formError.textContent = message
-  formError.classList.remove('hidden')
+  formError.textContent = message;
+  formError.classList.remove("hidden");
 }
 
-
 function clearError() {
-  formError.textContent = ''
-  formError.classList.add('hidden')
+  formError.textContent = "";
+  formError.classList.add("hidden");
 }
 
 /**
  * Displays all tasks in the task list.
  */
 function renderTasks() {
-  taskList.replaceChildren()
+  taskList.replaceChildren();
 
-  emptyState.classList.toggle('hidden', tasks.length > 0)
+  emptyState.classList.toggle("hidden", tasks.length > 0);
 
   tasks.forEach(function (task) {
-    const listItem = document.createElement('li')
-    const checkbox = document.createElement('input')
-    const taskText = document.createElement('span')
+    const listItem = document.createElement("li");
+    const checkbox = document.createElement("input");
+    const taskText = document.createElement("span");
+    const deleteButton = document.createElement("button");
 
     listItem.className =
-      'flex items-center gap-3 rounded-xl border border-purple-100 bg-purple-50 p-4'
+      "flex items-center gap-3 rounded-xl border border-purple-100 bg-purple-50 p-4";
 
-    checkbox.type = 'checkbox'
-    checkbox.checked = task.completed
-    checkbox.setAttribute('aria-label', `Complete ${task.text}`)
+    checkbox.type = "checkbox";
+    checkbox.dataset.taskId = task.id;
+    checkbox.checked = task.completed;
+    checkbox.setAttribute("aria-label", `Complete ${task.text}`);
 
-    taskText.textContent = task.text
-    taskText.className = 'flex-1 break-words'
+    taskText.textContent = task.text;
+    taskText.className = "flex-1 break-words";
 
     if (task.completed) {
-      taskText.classList.add('line-through', 'text-gray-400')
+      taskText.className = "flex-1 break-words line-through text-gray-400";
+    } else {
+      taskText.className = "flex-1 break-words";
     }
 
-    listItem.append(checkbox, taskText)
-    taskList.append(listItem)
-  })
+    deleteButton.textContent = "Delete";
+    deleteButton.type = "button";
+    deleteButton.dataset.taskId = task.id;
+    deleteButton.className =
+      "rounded-lg bg-red-100 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-200";
+
+    listItem.append(checkbox, taskText, deleteButton);
+    taskList.append(listItem);
+  });
 }
 
-taskForm.addEventListener('submit', function (event) {
-  event.preventDefault()
-  addTask(taskInput.value)
+taskForm.addEventListener("submit", function (event) {
+  event.preventDefault();
+  addTask(taskInput.value);
+});
+
+/**
+ * Updates a task's completion status when its checkbox changes.
+ */
+
+/**
+ * Updates a task's completion status when its checkbox changes.
+ */
+taskList.addEventListener("change", function (event) {
+  if (event.target.matches('input[type="checkbox"]')) {
+    const taskId = Number(event.target.dataset.taskId)
+
+    const task = tasks.find(function (item) {
+      return item.id === taskId
+    })
+
+    if (task) {
+      task.completed = event.target.checked
+      renderTasks()
+    }
+  }
 })
-renderTasks()
+
+/**
+ * Deletes a task after the user confirms.
+ */
+taskList.addEventListener("click", function (event) {
+  if (event.target.matches('button[data-task-id]')) {
+    const taskId = Number(event.target.dataset.taskId)
+
+    const confirmed = confirm('Are you sure you want to delete this task?')
+
+    if (confirmed) {
+      tasks = tasks.filter(function (task) {
+        return task.id !== taskId
+      })
+
+      renderTasks()
+    }
+  }
+});
+
+
+renderTasks();
