@@ -178,6 +178,7 @@ function renderTasks() {
     const checkbox = document.createElement("input");
     const taskText = document.createElement("span");
     const deleteButton = document.createElement("button");
+    const editButton = document.createElement("button");
 
     listItem.className =
       "flex items-center gap-3 rounded-xl border border-purple-100 bg-purple-50 p-4";
@@ -196,16 +197,50 @@ function renderTasks() {
       taskText.className = "flex-1 break-words";
     }
 
+    editButton.textContent = "Edit";
+    editButton.type = "button";
+    editButton.dataset.taskId = task.id;
+    editButton.className =
+      "rounded-lg bg-purple-100 px-3 py-2 text-sm font-medium text-purple-800 hover:bg-purple-200";
+
     deleteButton.textContent = "Delete";
     deleteButton.type = "button";
     deleteButton.dataset.taskId = task.id;
     deleteButton.className =
       "rounded-lg bg-red-100 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-200";
 
-    listItem.append(checkbox, taskText, deleteButton);
+    listItem.append(checkbox, taskText, editButton, deleteButton);
     taskList.append(listItem);
   });
 }
+
+
+function editTask(taskId, taskText) {
+  const task = tasks.find(function (item) {
+    return item.id === taskId
+  })
+
+  if (!task) {
+    return
+  }
+
+  const newText = taskText.trim()
+
+  if (newText === '') {
+    showError('Task cannot be empty.')
+    return
+  }
+
+  if (newText.length > 100) {
+    showError('Your task must be 100 characters or fewer.')
+    return
+  }
+
+  task.text = newText
+  clearError()
+  renderTasks()
+}
+
 
 taskForm.addEventListener("submit", function (event) {
   event.preventDefault();
@@ -221,27 +256,71 @@ taskForm.addEventListener("submit", function (event) {
  */
 taskList.addEventListener("change", function (event) {
   if (event.target.matches('input[type="checkbox"]')) {
-    const taskId = Number(event.target.dataset.taskId)
+    const taskId = Number(event.target.dataset.taskId);
 
     const task = tasks.find(function (item) {
-      return item.id === taskId
-    })
+      return item.id === taskId;
+    });
 
     if (task) {
-      task.completed = event.target.checked
-      renderTasks()
+      task.completed = event.target.checked;
+      renderTasks();
     }
   }
-})
+});
 
 /**
  * Deletes a task after the user confirms.
  */
-taskList.addEventListener("click", function (event) {
-  if (event.target.matches('button[data-task-id]')) {
-    const taskId = Number(event.target.dataset.taskId)
 
-    const confirmed = confirm('Are you sure you want to delete this task?')
+taskList.addEventListener("click", function (event) {
+  if (!event.target.matches("button[data-task-id]")) {
+    return
+  }
+
+  const taskId = Number(event.target.dataset.taskId)
+
+  // Save the edited task
+  if (event.target.textContent === "Save") {
+    const listItem = event.target.closest("li")
+    const input = listItem.querySelector('input:not([type="checkbox"])')
+
+    editTask(taskId, input.value)
+    return
+  }
+
+  // Open the task for editing
+  if (event.target.textContent === "Edit") {
+    const task = tasks.find(function (item) {
+      return item.id === taskId
+    })
+
+    if (!task) {
+      return
+    }
+
+    const input = document.createElement("input")
+    input.type = "text"
+    input.value = task.text
+    input.maxLength = 100
+    input.className =
+      "min-w-0 flex-1 rounded-lg border border-purple-300 px-3 py-2"
+
+    const listItem = event.target.closest("li")
+    const taskText = listItem.querySelector("span")
+
+    taskText.replaceWith(input)
+    event.target.textContent = "Save"
+    input.focus()
+    input.select()
+    return
+  }
+
+  // Delete the task after confirmation
+  if (event.target.textContent === "Delete") {
+    const confirmed = confirm(
+      "Are you sure you want to delete this task?"
+    )
 
     if (confirmed) {
       tasks = tasks.filter(function (task) {
@@ -250,6 +329,27 @@ taskList.addEventListener("click", function (event) {
 
       renderTasks()
     }
+  }
+})
+
+
+taskList.addEventListener('keydown', function (event) {
+  if (!event.target.matches('input:not([type="checkbox"])')) {
+    return
+  }
+
+  const listItem = event.target.closest('li')
+  const taskId = Number(
+    listItem.querySelector('button[data-task-id]').dataset.taskId
+  )
+
+  if (event.key === 'Enter') {
+    editTask(taskId, event.target.value)
+  }
+
+  if (event.key === 'Escape') {
+    renderTasks()
+    clearError()
   }
 });
 
